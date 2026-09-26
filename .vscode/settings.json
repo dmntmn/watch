@@ -1,3 +1,4 @@
 {
-    "sourcecraft-code-assist.vsCodeLmModelSelector": {}
+    "sourcecraft-code-assist.vsCodeLmModelSelector": {},
+    "git.ignoreLimitWarning": true
 }

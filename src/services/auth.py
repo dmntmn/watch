@@ -39,7 +39,10 @@ def decode_token(token: str) -> dict[str, Any]:
             token,
             signing_key.key,
             algorithms=["RS256"],
-            audience=settings.keycloak_aud,
+            # Keycloak по умолчанию ставит aud="account" (azp=client_id).
+            # Принимаем оба варианта; рекомендуемая конфигурация — Audience-маппер
+            # на клиенте, чтобы aud содержал id клиента (см. README).
+            audience=[settings.keycloak_aud, "account"],
             issuer=settings.keycloak_issuer_url,
             options={"verify_exp": True, "verify_aud": True, "verify_iss": True},
         )

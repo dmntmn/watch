@@ -70,9 +70,45 @@ def provision() -> None:
             headers=H,
         ).raise_for_status()
 
+    # SPA-клиент watch-frontend (OIDC Authorization Code + PKCE)
+    r = httpx.get(f"{BASE}/admin/realms/{REALM}/clients?clientId=watch-frontend", headers=H)
+    if not r.json():
+        httpx.post(
+            f"{BASE}/admin/realms/{REALM}/clients",
+            json={
+                "clientId": "watch-frontend",
+                "publicClient": True,
+                "standardFlowEnabled": True,
+                "directAccessGrantsEnabled": False,
+                "redirectUris": ["http://localhost:5173/*"],
+                "webOrigins": ["http://localhost:5173"],
+            },
+            headers=H,
+        ).raise_for_status()
+
+    # Audience-маппер: aud токена = watch-backend (рекомендуемая конфигурация)
+    mappers = httpx.get(
+        f"{BASE}/admin/realms/{REALM}/clients/{client_id}/protocol-mappers/models", headers=H
+    ).json()
+    if not any(m.get("name") == "audience" for m in mappers):
+        httpx.post(
+            f"{BASE}/admin/realms/{REALM}/clients/{client_id}/protocol-mappers/models",
+            json={
+                "name": "audience",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-audience-mapper",
+                "config": {
+                    "included.client.audience": "watch-backend",
+                    "access.token.claim": "true",
+                    "id.token.claim": "false",
+                },
+            },
+            headers=H,
+        ).raise_for_status()
+
     # Группы
     group_ids = {}
-    for g in ("personnel-managers", "project-managers", "occupancy-managers"):
+    for g in ("personnel-managers", "project-managers", "occupancy-managers", "admin"):
         resp = httpx.get(f"{BASE}/admin/realms/{REALM}/groups?search={g}&exact=true", headers=H)
         existing = [x for x in resp.json() if x["name"] == g]
         if existing:

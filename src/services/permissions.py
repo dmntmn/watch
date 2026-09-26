@@ -21,6 +21,12 @@ GROUP_PERMISSIONS: dict[str, set[Permission]] = {
     "personnel-managers": {Permission.EMPLOYEES_MANAGE, Permission.READ},
     "project-managers": {Permission.PROJECTS_MANAGE, Permission.READ},
     "occupancy-managers": {Permission.OCCUPANCY_MANAGE, Permission.READ},
+    "admin": {
+        Permission.EMPLOYEES_MANAGE,
+        Permission.PROJECTS_MANAGE,
+        Permission.OCCUPANCY_MANAGE,
+        Permission.READ,
+    },
 }
 
 

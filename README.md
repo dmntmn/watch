@@ -40,17 +40,33 @@ uvicorn src.main:socket_app --reload --port 8000
 
 ## Настройка Keycloak (realm)
 
+Рекомендуемый путь — автоматический провижининг:
+
+```bash
+.venv/bin/python scripts/provision_keycloak.py
+```
+
+Скрипт создаёт realm `watch`, клиент `watch-backend` (public), мапперы групп
+(`groups`) и audience (`aud=watch-backend`), группы
+`personnel-managers` / `project-managers` / `occupancy-managers`,
+тестового пользователя `manager1` / `secret` с группами персонала и занятости.
+
+Либо вручную:
+
 1. Создайте realm, например `watch`.
 2. Создайте клиент `watch-backend` (Access Type: **public**, Valid redirect URIs под ваш фронтенд).
-3. В клиенте добавьте **Client scope** -> mapper **Group Membership**:
+3. В клиенте добавьте mapper **Group Membership**:
    - Token Claim Name: `groups`
    - Add to access token: **ON**
-4. Создайте группы (и назначьте пользователей):
+4. (Рекомендуется) Добавьте mapper **Audience** с `included.client.audience = watch-backend`,
+   чтобы `aud` токена содержал id клиента. Приложение принимает и стандартный
+   вариант `aud=account` (проверяется `azp`/issuer).
+5. Создайте группы (и назначьте пользователей):
    - `personnel-managers` — CRUD сотрудников
    - `project-managers` — CRUD проектов/месторождений, назначение сотрудников на проекты
    - `occupancy-managers` — периоды занятости и финансовые записи
    - Все аутентифицированные пользователи имеют доступ на чтение
-5. (Опционально, ABAC-lite) Для ограничения видимости проектами добавьте
+6. (Опционально, ABAC-lite) Для ограничения видимости проектами добавьте
    mapper **Hardcoded claim** `projects` = JSON-массив UUID проектов, либо
    User Attribute `projects` с маппингом в access token. Если claim отсутствует — видна вся база.
 

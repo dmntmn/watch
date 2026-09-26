@@ -35,9 +35,9 @@ services:
   # Запуск: docker compose --profile storage up -d minio
   # Любой другой S3-совместимый сервис тоже подойдёт (см. S3_* в .env).
   minio:
-    image: quay.io/minio/minio:latest
-    profiles: ["storage"]
-    command: server /data --console-address ":9001"
+    image: firstfinger/minio
+    # profiles: ["storage"]
+    command: minio server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -74,7 +74,7 @@ services:
   # Приложение запускается отдельно: docker compose --profile app up -d
   app:
     build: .
-    profiles: ["app"]
+    # profiles: ["app"]
     environment:
       DATABASE_URL: postgresql+asyncpg://watch:watch@postgres:5432/watch
       REDIS_URL: redis://redis:6379/0
@@ -88,11 +88,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio:
-        condition: service_healthy
+      # minio:
+      #   condition: service_healthy
       keycloak:
         condition: service_started
-
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      app:
+        condition: service_started
 volumes:
   pg_data:
   redis_data:
