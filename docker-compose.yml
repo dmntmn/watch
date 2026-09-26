@@ -1,0 +1,99 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: watch
+      POSTGRES_PASSWORD: watch
+      POSTGRES_DB: watch
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      # При первой инициализации создаёт отдельную БД для Keycloak
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watch -d watch"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # MinIO опционален: некоторые окружения не могут скачать образ
+  # (например, ограничения доступа к quay.io/Docker Hub).
+  # Запуск: docker compose --profile storage up -d minio
+  # Любой другой S3-совместимый сервис тоже подойдёт (см. S3_* в .env).
+  minio:
+    image: quay.io/minio/minio:latest
+    profiles: ["storage"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: watch
+      KC_DB_PASSWORD: watch
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Приложение запускается отдельно: docker compose --profile app up -d
+  app:
+    build: .
+    profiles: ["app"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://watch:watch@postgres:5432/watch
+      REDIS_URL: redis://redis:6379/0
+      KEYCLOAK_SERVER_URL: http://localhost:8080
+      S3_ENDPOINT_URL: http://minio:9000
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
