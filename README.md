@@ -160,3 +160,12 @@ src/
 ```
 
 Запуск в Docker: `docker compose --profile app up -d` (после сборки образа).
+
+##Logger
+
+в любом модуле:
+
+from src.logging_config import get_logger
+
+logger = get_logger(__name__)
+logger.info("period created", extra={"period_id": str(period.id)})

@@ -1,6 +1,8 @@
 services:
   postgres:
     image: postgres:16-alpine
+    profiles: ["dev"]
+
     environment:
       POSTGRES_USER: watch
       POSTGRES_PASSWORD: watch
@@ -19,6 +21,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    profiles: ["dev"]
+
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
@@ -29,6 +33,17 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  redisinsight:
+    image: redis/redisinsight:latest
+    profiles: ["dev"]
+    container_name: redisinsight
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight-data:/data
+    depends_on:
+      - redis
+    restart: unless-stopped
 
   # MinIO опционален: некоторые окружения не могут скачать образ
   # (например, ограничения доступа к quay.io/Docker Hub).
@@ -36,7 +51,7 @@ services:
   # Любой другой S3-совместимый сервис тоже подойдёт (см. S3_* в .env).
   minio:
     image: firstfinger/minio
-    # profiles: ["storage"]
+    profiles: ["dev"]
     command: minio server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -58,6 +73,8 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     command: ["start-dev"]
+    profiles: ["dev"]
+
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
@@ -74,7 +91,7 @@ services:
   # Приложение запускается отдельно: docker compose --profile app up -d
   app:
     build: .
-    # profiles: ["app"]
+    profiles: ["app"]
     environment:
       DATABASE_URL: postgresql+asyncpg://watch:watch@postgres:5432/watch
       REDIS_URL: redis://redis:6379/0
@@ -93,6 +110,8 @@ services:
       keycloak:
         condition: service_started
   nginx:
+    profiles: ["app"]
+
     image: nginx:latest
     ports:
       - "80:80"
@@ -105,3 +124,4 @@ volumes:
   pg_data:
   redis_data:
   minio_data:
+  redisinsight-data:

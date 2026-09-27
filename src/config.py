@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     debug: bool = False
     cors_origins: list[str] = ["*"]
 
+    # --- Logging (см. src/logging_config.py) ---
+    log_level: str = "INFO"  # DEBUG | INFO | WARNING | ERROR | CRITICAL
+    log_format: str = "text"  # "text" — человекочитаемый, "json" — для агрегаторов
+
     # --- PostgreSQL ---
     database_url: str = "postgresql+asyncpg://watch:watch@localhost:5432/watch"
 

@@ -6,14 +6,14 @@
 """
 import asyncio
 import json
-import logging
 from typing import Any, Awaitable, Callable
 
 import redis.asyncio as aioredis
 
 from src.config import get_settings
+from src.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 settings = get_settings()
 

@@ -1,7 +1,6 @@
 """Socket.IO сервер: аутентификация по токену, подписка на просмотр,
 live-доставка изменений через Redis pub/sub (data:changed).
 """
-import logging
 import uuid
 from typing import Any
 
@@ -9,6 +8,7 @@ import socketio
 
 from src.config import get_settings
 from src.database import async_session_factory
+from src.logging_config import get_logger
 from src.models.user import User
 from src.services import audit
 from src.services.auth import TokenValidationError, decode_token, sync_user
@@ -16,7 +16,7 @@ from src.services.view_service import build_snapshot, month_window, parse_dt
 from src.sockets.events_bus import event_bus
 from src.sockets.manager import ViewSubscription, subscription_manager
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 settings = get_settings()
 

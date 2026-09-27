@@ -1,13 +1,13 @@
 """S3-compatible object storage for attachments (MinIO locally)."""
 import io
-import logging
 from typing import BinaryIO
 
 from aiobotocore.session import AioSession
 
 from src.config import get_settings
+from src.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 settings = get_settings()
 

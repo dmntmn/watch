@@ -8,7 +8,6 @@
   Socket.IO клиентам (см. src/sockets/events.py).
 """
 import asyncio
-import logging
 from contextlib import asynccontextmanager
 
 import socketio
@@ -17,13 +16,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.router import api_router
 from src.config import get_settings
+from src.logging_config import get_logger, setup_logging
 from src.services import audit  # noqa: F401  — регистрация event listeners аудита
 from src.services.storage import storage
 from src.sockets.events import _on_domain_event, sio
 from src.sockets.events_bus import event_bus
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+setup_logging()
+logger = get_logger(__name__)
 
 settings = get_settings()
 

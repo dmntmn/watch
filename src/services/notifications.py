@@ -4,15 +4,15 @@
 добавление финансовых записей. Письма отправляются через SMTP
 (текстовые шаблоны).
 """
-import logging
 from datetime import datetime
 from typing import Any
 
 import aiosmtplib
 
 from src.config import get_settings
+from src.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 settings = get_settings()
 
